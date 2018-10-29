@@ -6,7 +6,7 @@ import torchvision.models as models
 class EncoderCNN(nn.Module):
     def __init__(self, embed_size):
         super(EncoderCNN, self).__init__()
-        resnet = models.resnet50(pretrained=True)
+        resnet = models.resnet101(pretrained=True)
         for param in resnet.parameters():
             param.requires_grad_(False)
         
@@ -29,7 +29,7 @@ class DecoderRNN(nn.Module):
         self.embedding = nn.Embedding(vocab_size, embed_size)
         self.lstm = nn.LSTM(embed_size, hidden_size, num_layers,
                            dropout=drop_prob, batch_first=True)
-        self.dropout = nn.Dropout(drop_prob)
+        # self.dropout = nn.Dropout(drop_prob)
         self.fc = nn.Linear(hidden_size, vocab_size)
         self.init_weights()
 
@@ -37,19 +37,16 @@ class DecoderRNN(nn.Module):
         ''' Initialize weights for fully connected layer '''
         # Embedding Weights as random uniform
         self.embedding.weight.data.uniform_(-0.1, 0.1)
-
         # Set bias tensor to all zeros
         self.fc.bias.data.fill_(0)
         # FC weights as random uniform
         self.fc.weight.data.uniform_(-0.1, 0.1)
 
     def forward(self, features, captions):
-        captions = captions[:,:captions.shape[1]-1]
+        captions = captions[:,:-1]
         caption_embed = self.embedding(captions)
         x = torch.cat((torch.unsqueeze(features, 1), caption_embed), 1)
         out, _ = self.lstm(x)
-        out = self.dropout(out)
-        # out = out.view(-1, self.hidden_size)
         out = self.fc(out)
         return out
 
