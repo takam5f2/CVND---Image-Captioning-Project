@@ -52,4 +52,20 @@ class DecoderRNN(nn.Module):
 
     def sample(self, inputs, states=None, max_len=20):
         " accepts pre-processed image tensor (inputs) and returns predicted sentence (list of tensor ids of length max_len) "
-        pass
+        word_list = []
+        softmax = nn.Softmax(0)
+        for ii in range(max_len):
+            print(inputs.shape)
+            hidden, states = self.lstm(inputs, states)
+            outputs = self.fc(hidden)
+            print(outputs)
+            softmax_score = softmax(outputs[0,0,:])
+            print(softmax_score)
+            predicted = torch.argmax(softmax_score)
+            print(predicted)
+            word_list.append(predicted.item())
+            inputs = self.embedding(predicted)
+            inputs = torch.unsqueeze(inputs, 0)
+            inputs = torch.unsqueeze(inputs, 0)
+        
+        return word_list
